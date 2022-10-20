@@ -25,15 +25,12 @@ df %>%
 
 
 ```
-interpretation of the media
+interpretation of the median 
+The midian age for
 
 c) a plot that shows medians, spread of data, and outliers for the continuous variable age according to passenger class
 ```{r}
 library (tidyverse)
-ggplot(data=df)+
-  geom_point(aes(x= Age, y= Pclass))
-```
-```{r}
 ggplot(data = df) + 
   stat_summary(
     mapping = aes(x = Pclass, y = Age),
@@ -50,6 +47,20 @@ ggplot(data=df)+
   stat_summary(mapping = aes(x = Pclass, y = Age),
     fun = median, geom = "crossbar", width = 0.2)
 
+```
+
+
+```{r}
+ggplot(df, aes(x = factor(Pclass), y = Age, fill = factor(Pclass))) + 
+  geom_boxplot() + 
+  stat_summary(
+    aes(label = round(stat(y), 1)),
+    geom = "text", 
+    fun.y = function(y) { o <- boxplot.stats(y)$out; if(length(o) == 0) NA else o },
+    hjust = -2
+  )
+outliers = boxplot(df$Age, plot=FALSE)$out
+outliers
 ```
 
 

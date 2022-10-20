@@ -14,6 +14,7 @@ a) importing the dataset
 library(haven)
 library(readr)
 library(dplyr)
+library(tidyverse)
 df = read.csv('https://github.com/kijohnson/Data/blob/main/titanic.csv?raw=true')
 ```
 
@@ -26,9 +27,13 @@ df %>%
 
 ```
 interpretation of the median 
-The midian age for
+The median age for class 1 passanger is 38.5 years old
+The median age for class 2 passangers is 29 years old
+The median age for class 3 passangers is 24 years old
 
 c) a plot that shows medians, spread of data, and outliers for the continuous variable age according to passenger class
+### to chech the median on the graph 
+##1
 ```{r}
 library (tidyverse)
 ggplot(data = df) + 
@@ -39,29 +44,35 @@ ggplot(data = df) +
     fun = median)
 
 ```
-
-
-```{r}
-ggplot(data=df)+
-  geom_point(aes(x=Pclass, y= Age))+
-  stat_summary(mapping = aes(x = Pclass, y = Age),
-    fun = median, geom = "crossbar", width = 0.2)
-
-```
-
+Or 
+##2 checking the outliers, median, and data distribution at the same time
 
 ```{r}
-ggplot(df, aes(x = factor(Pclass), y = Age, fill = factor(Pclass))) + 
+a = ggplot(df, aes(x = factor(Pclass), y = Age, fill = factor(Pclass))) + 
   geom_boxplot() + 
   stat_summary(
     aes(label = round(stat(y), 1)),
     geom = "text", 
-    fun.y = function(y) { o <- boxplot.stats(y)$out; if(length(o) == 0) NA else o },
-    hjust = -2
+    fun = function(y) { o <- boxplot.stats(y)$out; if(length(o) == 0) NA else o },
+    hjust = -1, size = 2
   )
+a
+
+```
+
+##Printing the graph and the outlier table to 
+```{r}
+png(filename="v.jpg")
+plot(a)
+dev.off()
 outliers = boxplot(df$Age, plot=FALSE)$out
 outliers
+``````
+```{r}
+df %>%
+    group_by(Pclass) %>%
+    dplyr::summarize(sum(df$Sex == "male")/length(df$Sex), sum(df$Sex == "female")/length(df$Sex))
+
 ```
 
 
-```{r}

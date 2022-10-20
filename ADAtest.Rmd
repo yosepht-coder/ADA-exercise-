@@ -1,0 +1,56 @@
+---
+title: "ADA MID"
+author: "yoseph"
+date: "10/15/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+a) importing the dataset
+```{r}
+library(haven)
+library(readr)
+library(dplyr)
+df = read.csv('https://github.com/kijohnson/Data/blob/main/titanic.csv?raw=true')
+```
+
+b) determining the median age for by passenger class
+```{r}
+df %>%
+    group_by(Pclass) %>%
+    dplyr::summarize(median_age = median(Age, na.rm=TRUE))
+
+
+```
+interpretation of the media
+
+c) a plot that shows medians, spread of data, and outliers for the continuous variable age according to passenger class
+```{r}
+library (tidyverse)
+ggplot(data=df)+
+  geom_point(aes(x= Age, y= Pclass))
+```
+```{r}
+ggplot(data = df) + 
+  stat_summary(
+    mapping = aes(x = Pclass, y = Age),
+    fun.min = min,
+    fun.max = max,
+    fun = median)
+
+```
+
+
+```{r}
+ggplot(data=df)+
+  geom_point(aes(x=Pclass, y= Age))+
+  stat_summary(mapping = aes(x = Pclass, y = Age),
+    fun = median, geom = "crossbar", width = 0.2)
+
+```
+
+
+```{r}

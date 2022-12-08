@@ -1,0 +1,392 @@
+---
+title: "final_project_ADA"
+author: "yoseph"
+date: "12/5/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+#pacman::p_load(odds.n.ends, blorr, lmtest, car,  broom, tidyverse, jtools, readr) 
+library(haven)
+#NSDUH_2019 <- read_sav("NSDUH_2019.SAV")
+#NSDUH_2019$NEWRACE2
+```
+
+##Selecting only variables that we needs
+```{r}
+#DF_1 <- NSDUH_2019 %>%
+ # dplyr::select(c("NEEDL","IRSEX", "EDUHIGHCAT", "HEPBCEVER", "CATAG6", "ANYHLTI2","INCOME", "EDUSCHGRD2","NEWRACE2"))
+
+head(DF_1)
+```
+```{r}
+#DF_2 <-DF_1 %>%
+ # rename("PWID"= 1, "Sex" = 2, "Education_status"= 3, "Hep_status" = 4, "Age" = 5, "Health_insurance" = 6, "Income" = 7, "Edu" = 8, "Race" = 9)
+
+head(DF_2)
+
+```
+## Subseting those who said they were exposed to PWID
+```{r}
+#PWID = dplyr::filter(DF_2, PWID %in% c("1"))
+```
+
+##Subsetting those who response yes/no to Heptatus status
+```{r}
+PWID2 = dplyr::filter(PWID, Hep_status %in% c("1", "2"))
+```
+
+##Checking the output
+```{r}
+table(PWID2$Hep_status, useNA = "always")
+
+```
+##changing the outcome into bianary categorical
+```{r}
+class(PWID2$Hep_status)
+PWID2$Hep_status = as.factor(PWID2$Hep_status)
+class(PWID2$Hep_status)
+```
+#changing numerical to categorical 
+```{r}
+
+PWID2$Education_status = as.factor(PWID2$Education_status)
+PWID2$Age = as.factor(PWID2$Age)
+PWID2$Health_insurance = as.factor(PWID2$Health_insurance)
+PWID2$Income = as.factor(PWID2$Income)
+PWID2$Race = as.factor(PWID2$Race)
+PWID2$Sex = as.factor(PWID2$Sex)
+
+```
+
+##Checking variable type 
+
+```{r}
+summary(PWID2)
+class(PWID2$Sex)
+class(PWID2$Education_status)
+class(PWID2$Hep_status)
+class(PWID2$Age)
+class(PWID2$Health_insurance)
+class(PWID2$Income)
+class(PWID2$Edu)
+class(PWID2$Race)
+```
+# Recoding catagories 
+```{r}
+PWID2 <- PWID2 %>%
+  mutate(sex=case_when(Sex == 1 ~"Male",
+                       Sex == 2 ~"Female"))
+
+table(PWID2$sex)
+
+```
+##assigning NA for values that do not have relevant data
+
+```{r}
+
+library(tidyr)
+tidyr::replace_na(PWID2,
+               replace = list(Health_insurance = 94))
+
+PWID2 <- PWID2 %>%
+  mutate(insurance=case_when(Health_insurance == 1 ~"Yes",
+                       Health_insurance == 2 ~"No"))
+
+table(PWID2$insurance, useNA = "always")
+PWID2 = na.omit(PWID2)
+
+tidyr::replace_na(PWID2,
+               replace = list(Education_status = 5))
+PWID2 <- PWID2 %>%
+  mutate(education=case_when(Education_status == 1 ~"12th grade and less", 
+                             Education_status == 2 ~"A highschool graduate",
+                             Education_status == 3 ~"Associate degree",
+                             Education_status == 4 ~"College graduate"))
+table(PWID2$education, useNA = "always")
+
+
+PWID2 <- PWID2 %>%
+  mutate(income=case_when(Income == 1 ~"less than 20,000", 
+                          Income == 2 ~"20,000 - 49,999",
+                          Income == 3 ~"50,000 - 74,499",
+                          Income == 4 ~"75,000 and more"))
+table(PWID2$income, useNA = "always")
+
+PWID2 <- PWID2 %>%
+  mutate(race2=case_when(Race == 1 ~"A white", 
+                        Race == 2 ~"Black/African AMerican",
+                        Race == 3 ~"Non hispanic Native American",
+                        Race == 4 ~"NonHisp Native HI/Other Pac Isl",
+                        Race == 5 ~"Asian",
+                        Race == 6 ~"More than one race",
+                        Race == 7 ~"Hispanic"))
+
+table(PWID2$race2, useNA = "always")
+```
+```{r}
+PWID2$Edu[PWID2$Edu == 98] <- NA
+PWID2$Edu[PWID2$Edu == 99] <- NA
+PWID2
+```
+##recoding and making the output standard 1- output of interest 
+
+```{r}
+table(PWID2$Hep_status)
+ PWID2 <- PWID2 %>%
+  mutate(hep1=case_when(Hep_status == 1 ~"1",
+                       Hep_status == 2 ~"0"))
+
+table(PWID2$hep1)
+PWID2$hep1 = as.factor(PWID2$hep1)
+class(PWID2$hep1)
+```
+```{r}
+ PWID2 <- PWID2 %>%
+  mutate(hep=case_when(hep1 == 1 ~"Yes",
+                       hep1 == 0 ~"No"))
+
+table(PWID2$hep)
+```
+
+
+```{r}
+PWID2$age <- factor(PWID2$Age, levels = c(1:6), labels = c("12 - 17", "18 - 25","26 - 34", "35 - 49", "50 - 64", "65 and above"))
+summary(PWID2$age)
+
+```
+
+```{r}
+PWID2 = PWID2 %>%
+  mutate(age2 = if_else(age %in% c("12 - 17","18 - 25"), 1,
+                            if_else(age == "26 - 34", 2,
+                                    if_else(age =="35 - 49", 3, 
+                                            if_else(age == "50 - 64", 4,
+                                                    if_else(age == "65 and above",5,NULL))))))
+PWID2$age2 = as.factor(PWID2$age2)
+summary(PWID2$age2)
+         
+PWID2$age3 <- factor(PWID2$age2, levels = c(1:5), labels = c("below 25", "26 to 34", "35 to 49", "50 to 64", "65 and above"))
+summary(PWID2$age3)
+```
+#Recodimg race to two
+
+```{r}
+table(PWID2$race2)
+PWID2 = PWID2 %>%
+  mutate(race = if_else(race2 %in% c("Black/African AMerican","Non hispanic Native American","NonHisp
+                                     Native HI/Other Pac Isl","Asian","More than one race" ,"Hispanic"),1, 
+                        if_else(race2 == "A white",0,NULL)))
+PWID2$race = as.factor(PWID2$race)
+summary(PWID2$race)
+```
+##reassign
+```{r}
+PWID2$race3 <- factor(PWID2$race, levels = c(0:1), labels = c("Whites", "non-whites"))
+table(PWID2$race3)
+```
+
+
+
+```{r}
+#table(PWID2$hep, PWID2$sex, PWID2$education, PWID2$age3,PWID2$Income,PWID2$insurance)
+```
+
+
+```{r}
+  ggplot(PWID2, aes(x = hep , y = Edu, fill = Edu)) +
+      geom_boxplot() +
+      labs(x = "heptitus status", y = "Educational Status") +
+      theme_bw()
+
+by (PWID2$hep1,PWID2$Edu, mean)
+```
+## Test the linearity assumption for EDU if we take it as continues data, but actually it is categorical
+```{r}
+PWID2 <- PWID2 %>%
+  mutate(Edu.times.logEdu = Edu * log(Edu)) # create term to test linearity
+
+model2 <- glm(Hep_status ~ Edu + Edu.times.logEdu, data=PWID2, family="binomial") 
+
+summary(model2)
+```
+
+
+
+## Unadjusted model
+
+```{r}
+table(PWID2$education)
+class(PWID2$Hep_status)
+
+
+model1<- glm(hep1 ~ education, data=PWID2, family="binomial")
+summary(model1) # get log results
+
+exp(model1$coefficients)
+exp(confint(model1))
+
+odds.n.ends(model1) 
+```
+##adjusted model
+```{r}
+model3<- glm(hep1 ~ education + age3 + Income + race3, data=PWID2, family="binomial")
+summary(model3) 
+
+odds.n.ends(model3)
+
+compareCoefs(model1, model3)
+```
+```{r}
+vif(model3)
+
+# another way from the jtools package
+
+summ(model3, vifs = TRUE)
+# cutoff references: https://quantifyinghealth.com/vif-threshold/
+# df is the degrees of freedom associated with the term
+```
+```{r}
+#model fit test
+blr_model_fit_stats(model3)
+
+# deviance is 2 x the Log-Lik of the full model
+# the LR can be calculated as the absolute value of 2(Log-Lik Intercept only - Log-Lik Full model)
+# Compared to the intercept only model there is no difference in McFadden's R2
+
+# Hosmer lemeshow goodness of fit test: a significant p value indicates a bad fit
+blr_test_hosmer_lemeshow(model3)
+```
+##test effect modification
+
+```{r}
+# Model and insurance*education 
+model4<- glm(hep1 ~ education + age3 + Income + insurance +race3, data=PWID2, family="binomial")
+summary(model4) 
+odds.n.ends(model4)
+
+model5<- glm(hep1 ~ education + age3 + Income + insurance + race3 + education*insurance, data=PWID2, family="binomial")
+summary(model5) 
+odds.n.ends(model5)
+# Test the hypothesis with the lrtest
+lrtest(model4, model5)
+lrtest(model5,model4)
+```
+```{r}
+table(PWID2$education)
+table(PWID2$hep)
+table(PWID2$insurance)
+table(PWID2$Income)
+table(PWID2$sex)
+table(PWID2$age3)
+```
+##table 1
+```{r}
+
+#Let's make a table 1 with the table 1 function, which takes the form of an equation
+table1 = table1(~sex + age3 + race3 + education + insurance + income |hep, PWID2) 
+table1
+```
+```{r}
+library(flextable) 
+library(magrittr)
+t1flex(table1)%>%
+  save_as_docx(path = "table1.docx")
+```
+
+
+
+##Recoding variables
+```{r}
+label(PWID2$age3)<-"Age"
+label(PWID2$sex)<-"Sex"
+label(PWID2$income)<-"Income"
+label(PWID2$insurance)<-"Insurance at the survey"
+label(PWID2$education)<-"Educational Status"
+label(PWID2$hep)<-"Heptitus status"
+label(PWID2$race3)<-"Race"
+
+
+table1(~sex + age3 + education + race3 + insurance + income |hep, overall="Total", PWID2)
+```
+```{r}
+library(flextable) 
+library(magrittr)
+t1flex(table1)%>%
+  save_as_docx(path = "table1.docx")
+```
+
+
+
+
+## figure one
+
+```{r}
+#install.packages("DiagrammeR")
+#install.packages("DiagrammeRsvg")
+#install.packages("rsvg")
+#install.packages("export_svg")
+
+
+library(DiagrammeR)
+library(DiagrammeRsvg)
+library(magrittr) 
+library(rsvg)
+# The cerv dataset is 41,295 observations when it is read in and then after we exclude those with cerival cancer diagnoses before 2007, the dataset is 30,952 observations. If we exclude those with missing data on stage as the below step does, we are left with 28,261 observations. If there are no other variables with missing data this would be the n for our analytic dataset if we are doing a complete case analysis. We can show how we arrived at our analytic dataset n with the figure 1 code below.
+
+#This code was adapted from: 
+NSDUH_2019
+
+#need to exclude those with missing stage (you need to note how many were excluded at each step by looking at the difference in the number of observations in the dataset that is created after each exclusion and the number of observations in the dataset before the exclusion) 
+PWID2<-PWID2[which(!is.na(PWID2$Hep_status)),]
+
+#Figure 1
+figure1 = grViz("digraph flowchart {
+
+      # node definitions with substituted label text
+      node [fontname = Helvetica, shape = rectangle, fontsize=10] 
+      # notes indicate how many boxes you will have in your diagram. Since I have two sets of exclusions, I will have three nodes.
+      tab1 [label = '@@1'] # starting
+      tab2 [label = '@@2'] # exclusion 1
+      tab3 [label = '@@3'] # exclusion 2
+      tab4 [label = '@@4'] # exclusion 3
+      
+      # edge definitions with the node IDs are used to indicate how the rectangle boxes flow from each other. This is a simple flow chart but I could create branching instead as below
+      tab1 -> tab2 -> tab3 -> tab4
+}
+      #This set of code provides the text in each rectangle box.
+      [1]: 'Records received from NSDUH for Behavioral survey n=56,136'
+      [2]: 'Excluding 55,314 individuals who do not have injected drug lifetime exposure n=822'
+      [3]: 'Excluding 418 individuals who do not respond for heptitus status as Yes/No n=404'
+      [4]: 'Excluding 1 individual missing data n=403'
+      ")
+
+print(figure1)
+```
+
+
+```{r}
+t = DiagrammeRsvg::export_svg(figure1)
+tmp = charToRaw(t) # flatten
+rsvg::rsvg_png(tmp, "g.png") # saved graph as png in current working directory
+
+```
+
+
+```{r}
+```
+```{r}
+library(modelsummary)
+models = list(model1, model3)
+modelsummary(models, exponentiate = TRUE, stars = T, statistic = 'conf.int', conf_level = .95)
+modelsummary(models, exponentiate = TRUE, stars = T, statistic = 'conf.int', conf_level = .95, footnote='OR = ODDs Ratio', output = "table.docx")
+```
+
+
+
+
+
+
